@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <!-- <h1>{{ stock_availability }}</h1>
+    <h1>hello Shawn </h1> -->
+
+    <div class="search-box">
+        <div class = "row">
+            <input type = "text " id = "input-box" placeholder = "search for Ticker"
+            autocomplete="off">
+            <button>
+                click me
+            </button>
+            <button class = "buy">
+                buy
+            </button>
+            <button class = "sell">
+                sell
+            </button>
+            <button class = "short">
+                short
+            </button>
+        </div>
+
+        <div class = "result-box">
+            <!-- uses the list (array) of stocks available-->
+            <ul class = "filtering">
+
+            </ul>
+        </div>
+        <div>
+            <h2>Fake Money:  $100000 </h2>
+            <input type ="text" id = "input-number" placeholder = "price that you want to watch">
+
+        </div>
+        <div class = "graph"></div>
+        <div class = "price">
+            <h1> quote</h1>
+            <h2 class = "current"></h2>
+            <h2 class = "highest"></h2>
+            <h2 class = "lowest"></h2>
+        </div>
+        <div class = "news"> Company News</div>
+        <script>
+
+            price_alert = document.querySelector("#input-number")
+
+            // event listner for button 
+            buy = document.querySelector(".buy")
+            sell = document.querySelector(".sell")
+            short = document.querySelector(".short")
+
+            buy.addEventListener("click", function()
+            {
+                alert("you have chose to buy")
+            })
+
+            sell.addEventListener("click", function()
+            {
+                alert("you have chose to sell")
+            })
+
+            short.addEventListener("click", function()
+            {
+                alert("you have chose to short")
+            })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            console.log("happy")
+            click_array = []
+            let stocks = {{stock_availability | safe}};
+            const resultBox = document.querySelector(".result-box");
+            const inputBox = document.querySelector("#input-box");
+
+            inputBox.onkeyup = function()
+            {
+                var click
+                let result = [];
+                let input = inputBox.value;
+                if (input.length)
+                {
+                    result = stocks.filter((keyword) =>
+                    {
+                        return keyword.includes(input);
+                    });
+
+                }
+                display(result);
+                
+
+            }
+            console.log(stocks)
+            console.log("hello")
+
+    
+            function clicked(item)
+            {
+
+                // socket.on(a)
+                prev_ticker = "9999"
+                click_array.push(item)
+                connection = true 
+                temp = ""
+                console.log("here is the array ")
+                console.log(click_array)
+                if (typeof click_array[1] != "undefined")
+                {
+                    console.log(click_array)
+                    temp = click_array[1]
+                    prev_ticker = click_array[0]
+                    new_array = []
+                    click_array = []
+                    click_array.push(temp)
+                    connection = false
+                    console.log(" click array initializing")
+                    console.log(connection)
+                }
+                console.log("here is the connection")
+                console.log(connection)
+                console.log(click_array)
+                prev_item = false
+                alert(`clicked: ${item}`)
+                chosen = item
+
+
+
+
+                const socket = io.connect('http://127.0.0.1:5000');
+
+                socket.on("connect", function() {
+                        console.log("Connected to the server");
+                        data = item 
+                        socket.emit("data", data)
+
+                    });
+
+                    socket.on("disconnect", function()
+                {
+                    console.log("disconnected")
+                })
+
+                socket.on("quotes",function(quote)
+                    {
+                        console.log("this is quotes")
+                        console.log(quote)
+                        console.log(quote["c"])
+                        var current = document.querySelector(".current")
+                        var highest = document.querySelector(".highest")
+                        var lowest = document.querySelector(".lowest")
+
+                        current.textContent = `current price: ${quote["c"]}`
+                        highest.textContent = `highest price: ${quote["h"]}`
+                        lowest.textContent = `lowest price: ${quote["l"]}`
+
+                    
+                        console.log(quote)
+
+
+                                            // Get the input element
+                        var inputElement = document.getElementById('input-number');
+                        
+                        // Get the value from the input
+                        var inputPrice = parseFloat(inputElement.value);
+                        
+                        // Define the price to watch
+                        var current_price = quote["c"]; // Change this to the price you want to watch
+                        
+                        // Check if the input price is greater than the price to watch
+                        if (current_price >= inputPrice) {
+                            alert('Price is greater than the watched price!');
+                        }
+
+
+
+
+
+
+
+                    } )
+                socket.on("news", function(news)
+                {
+                    console.log("this is news")
+                    console.log(news)
+                    // var News = document.querySelector(".news")
+                    // var information = document.createElement("h3")
+                    // information.textContent = JSON.stringify(news)
+                    // News.appendChild(information)
+
+
+                    // Array to store all the headlines
+                    const headlines = news.slice(0,5).map(item => item["headline"])
+                    console.log(headlines)
+                    const summary = news.slice(0.5).map(item => item["summary"])
+                    console.log(summary)
+                    const url = news.slice(0,5).map(item => item["url"])
+
+
+                    newsContainer = document.querySelector(".news")
+
+                    for (let i = 0; i < 5 && i < news.length; i++) {
+                    // Create headline element
+                    const headlineElement = document.createElement('h3');
+                    headlineElement.textContent = news[i]["headline"];
+
+                    // Create summary element
+                    const summaryElement = document.createElement('p');
+                    summaryElement.textContent = news[i]["summary"];
+
+                    // Create url element
+                    const urlelement = document.createElement("a")
+                    urlelement.href = news[i]["url"]
+                    urlelement.textContent = "Read More"
+
+                    // Append headline and summary to news container
+                    newsContainer.appendChild(headlineElement);
+                    newsContainer.appendChild(summaryElement);
+                    newsContainer.appendChild(urlelement)
+                     }
+
+
+                })
+
+                socket.on("check_connection", function()
+                {
+                    console.log("the connection status is ")
+                    console.log(connection)
+                    console.log("checking for connection")
+                    if (connection == false)
+                    {
+                        console.log(WebSocket)
+                        console.log(socket)
+                        socket.disconnect()
+                        click_array = []
+                        clicked(temp)
+                    }
+                    else
+                    {
+                        console.log("remain")
+                    }
+                    
+                })
+
+
+                console.log("display graph ")
+                    console.log(`the stock you clicked is ${item}`)
+                    graph = document.querySelector(".graph")
+                    text = document.createElement("h3")
+                    text.textContent = "display graph"
+                    graph.appendChild(text)
+
+                    // socket.on('disconnect_old', () => {
+                    //     socket.disconnect();
+                    // });
+                    // socket.on("disconnect", function()
+                    // {
+                    //     console.log("disconected sucesfully")
+                    // })
+
+            }
+
+
+            function display(result)
+            {
+                var chosen = "none"
+                parent = document.querySelector(".filtering")
+                parent.innerHTML = ""
+                const content = result.slice(0,5).map((list) => {
+                    return list;
+                })
+                if (content.length > 0)
+                console.log(content)
+                {
+                    content.forEach((item) =>
+                    {
+                        console.log("the item is")
+                        console.log(item)
+                        var listing = document.createElement("li");
+                        listing.textContent = item;
+                        parent.appendChild(listing);
+
+
+                        listing.onclick = function()
+                        {
+                             chosen = clicked(item)
+                        }
+                    })
+                }
+                console.log("chosen is ")
+                console.log(chosen)
+
+                return chosen
+
+            }
+
+    
+
+        </script>
+    </div>
+{% endblock %}
